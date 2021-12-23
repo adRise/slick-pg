@@ -78,14 +78,15 @@ object PgTokenHelper {
     buf.toString
   }
 
+  /* smush builds in reverse to avoid the cost of :+, then reverse right before returning
+   */
   @tailrec
   private def smush(soFar: List[Token], remaining: Seq[Token]): Seq[Token] = (soFar, remaining) match {
-    case (tokens, Nil)                                  => tokens
-    case (empty, head +: tail) if empty.isEmpty         => smush(List(head), tail)
-    case (lead :+ Chunk(prefix), Chunk(suffix) +: tail) => smush(lead :+ Chunk(prefix + suffix), tail)
-    case (lead, middle +: tail)                         => smush(lead :+ middle, tail)
+    case (tokens, Nil)                                  => tokens.reverse  // Ensure that we return the tokens in the right order
+    case (Chunk(prefix) +: lead, Chunk(suffix) +: tail) => smush(Chunk(prefix + suffix) +: lead, tail)
+    case (lead, middle +: tail)                         => smush(middle +: lead, tail)
   }
-  
+
   def getChildren(token: Token): Seq[Token] = token match {
     case GroupToken(mList) => smush(Nil, mList)
       .filterNot(t => t == null || t.isInstanceOf[Border] || t == Comma)
