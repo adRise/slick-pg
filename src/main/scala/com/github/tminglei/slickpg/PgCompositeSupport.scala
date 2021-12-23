@@ -129,8 +129,9 @@ class PgCompositeSupportUtils(cl: ClassLoader, emptyMembersAsNull: Boolean) {
     def fromToken(token: Token): Any =
       if (token == Null) null
       else {
-        val args = 
+        val args: List[Any] =
           getChildren(token)
+            .toList
             .zip(convList)
             .map { case (token, converter) => converter.fromToken(token) }
 
@@ -169,8 +170,8 @@ class PgCompositeSupportUtils(cl: ClassLoader, emptyMembersAsNull: Boolean) {
   }
 
   case class SeqConverter(delegate: TokenConverter) extends TokenConverter {
-    def fromToken(token: Token): Any =
-      if (token == Null) null else getChildren(token).map(delegate.fromToken)
+    def fromToken(token: Token): List[Any] =
+      if (token == Null) null else getChildren(token).toList.map(delegate.fromToken)
 
     def toToken(value: Any): Token = value match {
       case vList: Seq[Any] => {
